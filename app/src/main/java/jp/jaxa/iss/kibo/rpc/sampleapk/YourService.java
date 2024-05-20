@@ -5,67 +5,54 @@ import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 
+import javax.naming.spi.DirStateFactory.Result;
+
 import org.opencv.core.Mat;
 
 /**
- * Class meant to handle commands from the Ground Data System and execute them in Astrobee.
+ * Class meant to handle commands from the Ground Data System and execute them
+ * in Astrobee.
  */
 
 public class YourService extends KiboRpcService {
     @Override
-    protected void runPlan1(){
+    protected void runPlan1() {
         // The mission starts.
         api.startMission();
+        // Move to the Target 1 position.
+        movetopos(10.95, -10.58, 5.195, 1, 0, 0, 0, 3);
 
-        // Move to a point.
-        Point point = new Point(10.9d, -9.92284d, 5.195d);
-        Quaternion quaternion = new Quaternion(0f, 0f, -0.707f, 0.707f);
-        api.moveTo(point, quaternion, false);
-
-        // Get a camera image.
         Mat image = api.getMatNavCam();
-
-        /* *********************************************************************** */
-        /* Write your code to recognize type and number of items in the each area! */
-        /* *********************************************************************** */
-
-        // When you recognize items, let’s set the type and number.
         api.setAreaInfo(1, "item_name", 1);
-
-        /* **************************************************** */
-        /* Let's move to the each area and recognize the items. */
-        /* **************************************************** */
-
-        // When you move to the front of the astronaut, report the rounding completion.
-        api.reportRoundingCompletion();
-
-        /* ********************************************************** */
-        /* Write your code to recognize which item the astronaut has. */
-        /* ********************************************************** */
-
-        // Let's notify the astronaut when you recognize it.
         api.notifyRecognitionItem();
-
-        /* ******************************************************************************************************* */
-        /* Write your code to move Astrobee to the location of the target item (what the astronaut is looking for) */
-        /* ******************************************************************************************************* */
-
-        // Take a snapshot of the target item.
         api.takeTargetItemSnapshot();
     }
 
     @Override
-    protected void runPlan2(){
-       // write your plan 2 here.
+    protected void runPlan2() {
+        // write your plan 2 here.
     }
 
     @Override
-    protected void runPlan3(){
+    protected void runPlan3() {
         // write your plan 3 here.
     }
 
-    // You can add your method.
-    private String yourMethod(){
-        return "your method";
+    private void movetopos(double pos_x, doubley pos_y, double pos_z,
+            double quat_x, double quat_y, double quat_z,
+            double quat_w, float recheck) {
+        final int loop_max = recheck;
+        final Point point = new Point(pos_x, pos_y, pos_z);
+        final Quaternion quaternion = new Quaternion((float) qua_x, (float) qua_y, (float) qua_z, (float) qua_w);
+        Result result = api.moveTo(point, quaternion, true);
+
+        int loopcount = 0;
+        while (result.hasSucceeded() == false) {
+            if (loopcount >= loop_max) {
+                break;
+            }
+            result = api.moveTo(point, quaternion, true);
+            loopcount++;
+        }
     }
 }
