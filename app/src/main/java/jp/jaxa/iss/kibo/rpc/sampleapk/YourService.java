@@ -7,13 +7,7 @@ import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 import gov.nasa.arc.astrobee.types.Vec3d;
 
-import gov.nasa.arc.astrobee.Result;
-import gov.nasa.arc.astrobee.Kinematis;
-
 import org.opencv.core.Mat;
-import org.opencv.aruco.Aruco;
-import org.opencv.aruco.Dictionary;
-import org.opencv.core.*;
 
 /**
  * Class meant to handle commands from the Ground Data System and execute them
@@ -27,7 +21,7 @@ public class YourService extends KiboRpcService {
         api.startMission();
         // Move to the Target 1 position.
         movetopos(10.95, -9.9228d, 5.195, 0, 0, -0.70f, 0.70f, 3, true);
-        targetack_debug(1, item_cv, bmptar1, mattar1);
+        targetack_debug(1, "item_cv", "bmptar1", "mattar1");
         // Move to the Target 2 position.
     }
 
