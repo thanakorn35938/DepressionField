@@ -1,6 +1,12 @@
 package jp.jaxa.iss.kibo.rpc.sampleapk;
 
+import android.app.Activity;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
+import android.media.ThumbnailUtils;
+import android.os.Bundle;
+import android.util.Log;
 
 import gov.nasa.arc.astrobee.Result;
 import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
@@ -8,9 +14,62 @@ import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
 
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
 import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import org.tensorflow.lite.support.common.FileUtil;
+import org.tensorflow.lite.support.model.Model;
+import org.tensorflow.lite.*;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+import org.tensorflow.lite.Interpreter;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Logger;
-import java.util.logging.Logger;
+import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+import org.tensorflow.lite.DataType;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
+import android.content.res.AssetFileDescriptor;
+import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+
+import org.checkerframework.checker.units.qual.A;
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+import org.tensorflow.lite.Interpreter;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Class meant to handle commands from the Ground Data System and execute them
@@ -20,6 +79,7 @@ import java.util.logging.Logger;
 public class YourService extends KiboRpcService {
     @Override
     protected void runPlan1() {
+        int imageSize = 320;
         // The mission starts.
         api.startMission();
         // Move to the Target 1 position.
@@ -27,7 +87,7 @@ public class YourService extends KiboRpcService {
         targetack_debug(1, "item_cv", "bmptar1", "mattar1");
         // Move to the Target 2 position.
         movetopos(11.235, -9.25, 5.295, 0.707, 0.0, 0.707, 0.00, 3, true);
-        movetopos(10.925, -8.875, 4.2, 0.500, 0.500, 0.500, 0.500, 3, false);
+        movetopos(10.925, -8.875, 3.7295, 0.500, 0.500, 0.500, 0.500, 3, true);
         targetack_debug(2, "item_2", "bmptar2", "mattar2");
     }
 
@@ -72,6 +132,16 @@ public class YourService extends KiboRpcService {
         api.reportRoundingCompletion();
         api.notifyRecognitionItem();
         api.takeTargetItemSnapshot();
+
+    }
+
+    private MappedByteBuffer loadModelFile(Activity activity) throws IOException {
+        AssetFileDescriptor fileDescriptor = activity.getAssets().openFd("detect.tflite");
+        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+        FileChannel fileChannel = inputStream.getChannel();
+        long startOffset = fileDescriptor.getStartOffset();
+        long declaredLength = fileDescriptor.getDeclaredLength();
+        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
 }
