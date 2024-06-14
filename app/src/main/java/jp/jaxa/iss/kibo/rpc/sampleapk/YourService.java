@@ -1,75 +1,27 @@
 package jp.jaxa.iss.kibo.rpc.sampleapk;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.media.ThumbnailUtils;
-import android.os.Bundle;
-import android.util.Log;
+
+import com.google.mlkit.vision.label.ImageLabeler;
+
+import org.opencv.core.Mat;
+import org.tensorflow.lite.support.model.Model;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.util.logging.Logger;
 
 import gov.nasa.arc.astrobee.Result;
-import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
-
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
-
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.tensorflow.lite.support.common.FileUtil;
-import org.tensorflow.lite.support.model.Model;
-import org.tensorflow.lite.*;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
-import org.tensorflow.lite.Interpreter;
-
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.logging.Logger;
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
-import org.tensorflow.lite.DataType;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.graphics.Bitmap;
-
-import org.checkerframework.checker.units.qual.A;
-import org.opencv.android.Utils;
-import org.opencv.core.Core;
-import org.opencv.core.Mat;
-import org.opencv.core.Scalar;
-import org.opencv.imgproc.Imgproc;
-import org.tensorflow.lite.Interpreter;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
 
 /**
  * Class meant to handle commands from the Ground Data System and execute them
@@ -77,9 +29,10 @@ import java.util.TreeMap;
  */
 
 public class YourService extends KiboRpcService {
+    int imageSize = 320;
+    private ImageLabeler imageLabeler;
     @Override
     protected void runPlan1() {
-        int imageSize = 320;
         // The mission starts.
         api.startMission();
         // Move to the Target 1 position.
@@ -109,7 +62,7 @@ public class YourService extends KiboRpcService {
         Result result = api.moveTo(point, quaternion, true);
 
         int loopcount = 0;
-        while (((Result) result).hasSucceeded() == false) {
+        while (result.hasSucceeded() == false) {
             if (loopcount >= recheck) {
                 break;
             }
@@ -144,4 +97,21 @@ public class YourService extends KiboRpcService {
         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
     }
 
-}
+    private void classifyImage() {
+        try {
+            Model model = Model.newInstance(Context);
+
+        } catch (IOException e) {
+            //TODO: Handle the exception
+        }
+
+        private void imageprocessing (Intent Data){
+            Bitmap image = (Bitmap) Data.getExtras().get("data");
+            int dimesion = Math.min(image.getWidth(), image.getHeight());
+            image = ThumbnailUtils.extractThumbnail(image, dimesion, dimesion);
+            image = Bitmap.createScaledBitmap(image, imageSize, imageSize, true);
+            classifyImage(image);
+
+        }
+
+    }
