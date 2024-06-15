@@ -1,23 +1,15 @@
 package jp.jaxa.iss.kibo.rpc.sampleapk;
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
-import android.media.ThumbnailUtils;
-
-import com.google.mlkit.vision.label.ImageLabeler;
-
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
 import org.opencv.core.Mat;
-import org.tensorflow.lite.support.model.Model;
+import org.tensorflow.lite.Interpreter;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.logging.Logger;
-
 import gov.nasa.arc.astrobee.Result;
 import gov.nasa.arc.astrobee.types.Point;
 import gov.nasa.arc.astrobee.types.Quaternion;
@@ -25,12 +17,12 @@ import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
 
 /**
  * Class meant to handle commands from the Ground Data System and execute them
- * in Astrobee.
+ * in Astrobee.f
+ * 
  */
-
 public class YourService extends KiboRpcService {
-    int imageSize = 320;
-    private ImageLabeler imageLabeler;
+    int IMAGE_SIZE = 320;
+
     @Override
     protected void runPlan1() {
         // The mission starts.
@@ -44,14 +36,97 @@ public class YourService extends KiboRpcService {
         targetack_debug(2, "item_2", "bmptar2", "mattar2");
     }
 
-    @Override
-    protected void runPlan2() {
-        // write your plan 2 here.
-    }
+    private void TFL() {
+        // Load the TFLite model
+        String modelPath = "detect.tflite";
+        Interpreter.Options options = new Interpreter.Options();
+        Interpreter interpreter = new Interpreter(new File(modelPath), options);
 
-    @Override
-    protected void runPlan3() {
-        // write your plan 3 here.
+        // Prepare the input bitmap
+        Bitmap inputBitmap = api.getBitmapNavCam();
+        Bitmap opt_bitmap;
+        opt_bitmap = inputBitmap.createScaledBitmap(inputBitmap, IMAGE_SIZE, IMAGE_SIZE, false);
+
+        // TODO : @SCYT - Bitmap Scaling
+        /**
+         * Preprocess the input bitmap
+         * // TODO: Implement any necessary preprocessing steps
+         * // Convert the input bitmap to grayscale
+         * Bitmap grayscaleBitmap = toGrayscale(opt_bitmap);
+         * // Normalize the pixel values
+         * Bitmap normalizedBitmap = normalize(grayscaleBitmap);
+         * // Resize the bitmap to the desired input size
+         * Bitmap resizedBitmap = resize(normalizedBitmap, IMAGE_SIZE, IMAGE_SIZE);
+         * // Convert the resized bitmap to a ByteBuffer
+         * ByteBuffer inputBuffer = convertToByteBuffer(resizedBitmap);
+         * 
+         * // Define the preprocessing methods
+         * private Bitmap toGrayscale(Bitmap bitmap) {
+         * Bitmap grayscaleBitmap = Bitmap.createBitmap(bitmap.getWidth(),
+         * bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+         * Canvas canvas = new Canvas(grayscaleBitmap);
+         * ColorMatrix colorMatrix = new ColorMatrix();
+         * colorMatrix.setSaturation(0);
+         * Paint paint = new Paint();
+         * ColorMatrixColorFilter filter = new ColorMatrixColorFilter(colorMatrix);
+         * paint.setColorFilter(filter);
+         * canvas.drawBitmap(bitmap, 0, 0, paint);
+         * return grayscaleBitmap;
+         * }
+         * 
+         * private Bitmap normalize(Bitmap bitmap) {
+         * Bitmap normalizedBitmap = Bitmap.createBitmap(bitmap.getWidth(),
+         * bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+         * int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+         * bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(),
+         * bitmap.getHeight());
+         * int sum = 0;
+         * for (int pixel : pixels) {
+         * sum += Color.red(pixel);
+         * }
+         * int mean = sum / (bitmap.getWidth() * bitmap.getHeight());
+         * for (int i = 0; i < pixels.length; i++) {
+         * int normalizedPixel = (Color.red(pixels[i]) - mean) / 255;
+         * pixels[i] = Color.rgb(normalizedPixel, normalizedPixel, normalizedPixel);
+         * }
+         * normalizedBitmap.setPixels(pixels, 0, bitmap.getWidth(), 0, 0,
+         * bitmap.getWidth(), bitmap.getHeight());
+         * return normalizedBitmap;
+         * }
+         * 
+         * private Bitmap resize(Bitmap bitmap, int width, int height) {
+         * return Bitmap.createScaledBitmap(bitmap, width, height, false);
+         * }
+         * 
+         * private ByteBuffer convertToByteBuffer(Bitmap bitmap) {
+         * ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bitmap.getWidth() *
+         * bitmap.getHeight() * 4);
+         * byteBuffer.order(ByteOrder.nativeOrder());
+         * int[] pixels = new int[bitmap.getWidth() * bitmap.getHeight()];
+         * bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(),
+         * bitmap.getHeight());
+         * for (int pixel : pixels) {
+         * byteBuffer.putFloat(Color.red(pixel) / 255f);
+         * }
+         * return byteBuffer;
+         * }
+         **/
+
+        // Convert the input bitmap to a ByteBuffer
+
+        ByteBuffer inputBuffer = ByteBuffer.allocateDirect(320 * 320 * 4);
+        inputBuffer.order(ByteOrder.nativeOrder());
+        inputBuffer.rewind();
+        inputBitmap.copyPixelsToBuffer(inputBuffer);
+
+        // Run inference on the input
+        // TODO: Implement the inference logic using the TFLite interpreter
+
+        // Postprocess the output
+        // TODO: Implement any necessary postprocessing steps
+
+        // Clean up resources
+        interpreter.close();
     }
 
     private void movetopos(double pos_x, double pos_y, double pos_z,
@@ -62,15 +137,12 @@ public class YourService extends KiboRpcService {
         Result result = api.moveTo(point, quaternion, true);
 
         int loopcount = 0;
-        while (result.hasSucceeded() == false) {
-            if (loopcount >= recheck) {
-                break;
-            }
+        while (!result.hasSucceeded() && loopcount < recheck) {
             result = api.moveTo(point, quaternion, true);
             loopcount++;
         }
 
-        if (log_enable == true) {
+        if (log_enable) {
             Logger logger = Logger.getLogger(YourService.class.getName());
             logger.info("Move to position: " + point.toString() + ", Quaternion: " + quaternion.toString());
         }
@@ -85,33 +157,6 @@ public class YourService extends KiboRpcService {
         api.reportRoundingCompletion();
         api.notifyRecognitionItem();
         api.takeTargetItemSnapshot();
-
     }
 
-    private MappedByteBuffer loadModelFile(Activity activity) throws IOException {
-        AssetFileDescriptor fileDescriptor = activity.getAssets().openFd("detect.tflite");
-        FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
-        FileChannel fileChannel = inputStream.getChannel();
-        long startOffset = fileDescriptor.getStartOffset();
-        long declaredLength = fileDescriptor.getDeclaredLength();
-        return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-    }
-
-    private void classifyImage() {
-        try {
-            Model model = Model.newInstance(Context);
-
-        } catch (IOException e) {
-            //TODO: Handle the exception
-        }
-
-        private void imageprocessing (Intent Data){
-            Bitmap image = (Bitmap) Data.getExtras().get("data");
-            int dimesion = Math.min(image.getWidth(), image.getHeight());
-            image = ThumbnailUtils.extractThumbnail(image, dimesion, dimesion);
-            image = Bitmap.createScaledBitmap(image, imageSize, imageSize, true);
-            classifyImage(image);
-
-        }
-
-    }
+}
