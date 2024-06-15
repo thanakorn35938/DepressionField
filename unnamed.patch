@@ -1,0 +1,157 @@
+Index: app/src/main/java/jp/jaxa/iss/kibo/rpc/sampleapk/YourService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/jp/jaxa/iss/kibo/rpc/sampleapk/YourService.java	(revision f0dd1bf3e849c91960a94e6cf247b4958bf29686)
++++ app/src/main/java/jp/jaxa/iss/kibo/rpc/sampleapk/YourService.java	(date 1718385636877)
+@@ -1,75 +1,27 @@
+ package jp.jaxa.iss.kibo.rpc.sampleapk;
+ 
+ import android.app.Activity;
++import android.content.Context;
++import android.content.Intent;
+ import android.content.res.AssetFileDescriptor;
+-import android.content.res.AssetManager;
+ import android.graphics.Bitmap;
+ import android.media.ThumbnailUtils;
+-import android.os.Bundle;
+-import android.util.Log;
+ 
+-import gov.nasa.arc.astrobee.Result;
+-import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
++import com.google.mlkit.vision.label.ImageLabeler;
+ 
+-import gov.nasa.arc.astrobee.types.Point;
+-import gov.nasa.arc.astrobee.types.Quaternion;
+-
+-import org.opencv.android.Utils;
+-import org.opencv.core.Core;
+ import org.opencv.core.Mat;
+-import org.opencv.core.Scalar;
+-import org.opencv.imgproc.Imgproc;
+-import org.tensorflow.lite.support.common.FileUtil;
+ import org.tensorflow.lite.support.model.Model;
+-import org.tensorflow.lite.*;
+-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+-import org.tensorflow.lite.Interpreter;
+ 
+-import java.io.BufferedReader;
+ import java.io.FileInputStream;
+ import java.io.IOException;
+-import java.io.InputStreamReader;
+-import java.lang.reflect.Array;
+-import java.nio.ByteBuffer;
+-import java.nio.ByteOrder;
+ import java.nio.MappedByteBuffer;
+ import java.nio.channels.FileChannel;
+-import java.util.ArrayList;
+-import java.util.List;
+-import java.util.Map;
+-import java.util.TreeMap;
+ import java.util.logging.Logger;
+-import org.tensorflow.lite.Interpreter;
+-import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
+-import org.tensorflow.lite.DataType;
+-import java.nio.ByteBuffer;
+-import java.nio.ByteOrder;
+-import java.nio.MappedByteBuffer;
+-import android.content.res.AssetFileDescriptor;
+-import android.content.res.AssetManager;
+-import android.graphics.Bitmap;
+ 
+-import org.checkerframework.checker.units.qual.A;
+-import org.opencv.android.Utils;
+-import org.opencv.core.Core;
+-import org.opencv.core.Mat;
+-import org.opencv.core.Scalar;
+-import org.opencv.imgproc.Imgproc;
+-import org.tensorflow.lite.Interpreter;
+-
+-import java.io.BufferedReader;
+-import java.io.File;
+-import java.io.FileInputStream;
+-import java.io.IOException;
+-import java.io.InputStreamReader;
+-import java.lang.reflect.Array;
+-import java.nio.ByteBuffer;
+-import java.nio.ByteOrder;
+-import java.nio.channels.FileChannel;
+-import java.util.ArrayList;
+-import java.util.List;
+-import java.util.Map;
+-import java.util.TreeMap;
++import gov.nasa.arc.astrobee.Result;
++import gov.nasa.arc.astrobee.types.Point;
++import gov.nasa.arc.astrobee.types.Quaternion;
++import jp.jaxa.iss.kibo.rpc.api.KiboRpcService;
+ 
+ /**
+  * Class meant to handle commands from the Ground Data System and execute them
+@@ -77,9 +29,10 @@
+  */
+ 
+ public class YourService extends KiboRpcService {
++    int imageSize = 320;
++    private ImageLabeler imageLabeler;
+     @Override
+     protected void runPlan1() {
+-        int imageSize = 320;
+         // The mission starts.
+         api.startMission();
+         // Move to the Target 1 position.
+@@ -144,4 +97,21 @@
+         return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+     }
+ 
+-}
++    private void classifyImage() {
++        try {
++            Model model = Model.newInstance(Context);
++
++        } catch (IOException e) {
++            //TODO: Handle the exception
++        }
++
++        private void imageprocessing (Intent Data){
++            Bitmap image = (Bitmap) Data.getExtras().get("data");
++            int dimesion = Math.min(image.getWidth(), image.getHeight());
++            image = ThumbnailUtils.extractThumbnail(image, dimesion, dimesion);
++            image = Bitmap.createScaledBitmap(image, imageSize, imageSize, true);
++            classifyImage(image);
++
++        }
++
++    }
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision f0dd1bf3e849c91960a94e6cf247b4958bf29686)
++++ app/build.gradle	(date 1718385405231)
+@@ -50,6 +50,8 @@
+     }
+     testCompile 'junit:junit:4.12'
+     compile 'com.quickbirdstudios:opencv-contrib:4.5.3.0'
++    //Image Classi
++    implementation 'com.google.mlkit:image-labeling:17.0.5'
+     implementation 'org.tensorflow:tensorflow-lite-task-vision:0.4.0'
+     implementation 'org.tensorflow:tensorflow-lite-task-audio:0.4.0'
+     implementation 'org.tensorflow:tensorflow-lite:+'
+Index: gradle.properties
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>windows-1252
+===================================================================
+--- gradle.properties	(revision f0dd1bf3e849c91960a94e6cf247b4958bf29686)
++++ gradle.properties	(date 1718385377651)
+@@ -10,6 +10,8 @@
+ # Specifies the JVM arguments used for the daemon process.
+ # The setting is particularly useful for tweaking memory settings.
+ org.gradle.jvmargs=-Xmx1536m
++android.useAndroidX=true
++android.enableJetifier=true
+ 
+ # When configured, Gradle will run in incubating parallel mode.
+ # This option should only be used with decoupled projects. More details, visit
